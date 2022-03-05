@@ -204,8 +204,8 @@ if __name__ == '__main__':
     # embeddings = torch.FloatTensor(json.load(open(embedding_path, 'r'))['ent_embeddings'])
     # entity = embeddings.shape[0]
     # emb_size = embeddings.shape[1]
-    # rec = GraphEncoder(entity, emb_size,user_num =6040*0.8,embeddings=embeddings, max_seq_length=10, max_node=20, hiddim=50,
-    #                             layers=2,cash_fn=None, fix_emb=False)
+    rec = GraphEncoder(entity, emb_size,user_num =6040*0.8,embeddings=embeddings, max_seq_length=10, max_node=20, hiddim=50,
+                                layers=2,cash_fn=None, fix_emb=False)
     print(rec)
 
 
