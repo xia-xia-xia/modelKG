@@ -11,6 +11,7 @@ import numpy as np
 use_cuda = torch.cuda.is_available()
 device=torch.device("cuda" if use_cuda else "cpu")
 from numpy.random import RandomState
+
 class GraphConstructer():
     def __init__(self, max_nodes, max_seq_length, kg_fn=None, cached_graph_fn=None):
         if kg_fn is None:
@@ -49,15 +50,9 @@ class GraphConstructer():
                 cur_neighbors = ([node] + user_graph[node][:10] + kg_graph[node])[:E]
             else:
                 cur_neighbors = ([node] + user_graph[node]+kg_graph[node])[:E]
-                """
-                for i in range(E - len(graph[node])):
-                    cur_neighbors = cur_neighbors + [node]
-                cur_neighbors = cur_neighbors[:E]"""
         except:
             cur_neighbors = ([node] + kg_graph[node])[:E]
-            """
-            for i in range(E):
-                cur_neighbors = cur_neighbors + [node]"""
+
         nodes = torch.zeros((E)).long().to(device)
         adj = torch.zeros((E, E)).to(device)  #邻接矩阵？定义任意两个节点有指向（或者说相邻、相关）
 
@@ -67,6 +62,7 @@ class GraphConstructer():
             adj[i][0] = 1
             adj[i][i] = 1
         return nodes, adj, len(cur_neighbors)
+
     def get_seq_graph(self, seq):
         """
         :param seq: a list of nodes [l]
@@ -88,7 +84,7 @@ class GraphConstructer():
         seq_neighbors[:l] = torch.cat(neighbors, dim=0)  # [l x E]
 
         return seq_neighbors, seq_adjs
-
+# 图卷积
 class GraphConvolution(Module):
     # __init__初始化了一些用到的参数，包括输入和输出的维度，并初始化了每一层的权重
     def __init__(self, in_features, out_features, bias=True):
@@ -154,7 +150,8 @@ class GraphEncoder(Module):
             indim = outdim
 
     # forward()方法说明了每一层对数据的操作
-    def forward(self, seq,user,choose_action=False):
+    # def forward(self, seq,user,choose_action=False):
+    def forward(self, seq, user):
         batch_seq_adjs = []
         batch_seq_neighbors = []
         for s in seq:
@@ -171,6 +168,7 @@ class GraphEncoder(Module):
 
         seq_embeddings = output_state[:, :, :1, :].contiguous().squeeze()  # [N x L x d]
         user_emb = self.entity_user_emb(user)
+        '''
         if (choose_action):
             # torch.squeeze（）函数可以删除数组形状中的单维度条目，即把shape中为1的维度去掉，但是对非单维的维度不起作用。通过squeeze()函数转换后，要显示的数组变成了秩为1的数组
             user_emb = user_emb.squeeze(0)
@@ -185,27 +183,23 @@ class GraphEncoder(Module):
             right = items @ self.attention_weights
             middle = user_emb * right
             output = torch.cat((user_emb, middle, right), 1)
-        """
-        if (choose_action == True):
-            state_emb = torch.unsqueeze(seq_embeddings, 0)
-            out, h = self.rnn(state_emb)
-            state = h.permute(1, 0, 2)
-        else:
-            out, h = self.rnn(seq_embeddings)
-            state = h.permute(1, 0, 2)"""
+        '''
+        user_emb = user_emb.squeeze(0)
+        items = seq_embeddings.t()
+        right = items @ self.attention_weights
+        middle = user_emb * right
+        output = torch.cat((user_emb, middle, right), 0).flatten()
         return output
 
 if __name__ == '__main__':
-    rec=GraphConstructer(max_nodes=20, max_seq_length=10, kg_fn=None, cached_graph_fn=None)
-    # rec = GraphEncoder(entity, emb_size,user_num =self.boundary_userid,embeddings=embeddings, max_seq_length=10, max_node=20, hiddim=50,
-    #                             layers=2,cash_fn=None, fix_emb=False).to(device)
+    # graph = GraphConstructer(max_nodes=20, max_seq_length=10, kg_fn=None, cached_graph_fn=None)
     # rec=rec.run()
-    # embedding_path = 'embedding.vec.json'
-    # embeddings = torch.FloatTensor(json.load(open(embedding_path, 'r'))['ent_embeddings'])
-    # entity = embeddings.shape[0]
-    # emb_size = embeddings.shape[1]
+    embedding_path = 'embedding.vec.json'
+    embeddings = torch.FloatTensor(json.load(open(embedding_path, 'r'))['ent_embeddings'])
+    entity = embeddings.shape[0]
+    emb_size = embeddings.shape[1]
     rec = GraphEncoder(entity, emb_size,user_num =6040*0.8,embeddings=embeddings, max_seq_length=10, max_node=20, hiddim=50,
-                                layers=2,cash_fn=None, fix_emb=False)
+                                layers=2,cash_fn=None, fix_emb=False).to(device)
     print(rec)
 
 
