@@ -8,6 +8,7 @@ from tqdm import tqdm
 import pickle
 import gzip
 import numpy as np
+from collections import defaultdict
 use_cuda = torch.cuda.is_available()
 device=torch.device("cuda" if use_cuda else "cpu")
 from numpy.random import RandomState
@@ -129,27 +130,17 @@ class GraphEncoder(Module):
         entity_user_emb = torch.cat([embeddings,user_emb], dim=0)
         self.entity_user_emb.weight = nn.Parameter(entity_user_emb)
         self.random_state = RandomState(1)
-        """
-        self.embedding = nn.Embedding(entity, emb_size)
-        if embeddings is not None:
-            print("pre-trained embeddings")
-            self.embedding.from_pretrained(embeddings, freeze=fix_emb)"""
         self.constructor = GraphConstructer(max_nodes=max_node, max_seq_length=max_seq_length, cached_graph_fn=cash_fn)
         self.layers = layers
         indim, outdim = emb_size, hiddim
         self.gnns = nn.ModuleList()
-        #self.rnn = nn.GRU(50, 50, 1, batch_first=True)
         # 对每个边产生一个注意力权重，torch.from_numpy()方法把数组转换成张量。
         self.attention_weights = nn.Parameter(torch.from_numpy(0.1 * self.random_state.rand(self.n_items)).float())
-        #self.attention_weights = Parameter(torch.FloatTensor(self.n_items))
-        #nn.init.xavier_uniform_(self.attention_weights, gain=nn.init.calculate_gain('relu'))
-
         for l in range(layers):
             self.gnns.append(GraphConvolution(indim, outdim))
             indim = outdim
 
     # forward()方法说明了每一层对数据的操作
-    # def forward(self, seq,user,choose_action=False):
     def forward(self, seq, user):
         user = (torch.LongTensor(user)).to(device)
         batch_seq_adjs = []
@@ -177,7 +168,7 @@ class GraphEncoder(Module):
         middle = user_emb * right
         output = torch.cat((user_emb, middle, right), 0).flatten()
         output = self.layer1(output)
-        print(output)
+        # print(output)
         return output
 
 if __name__ == '__main__':
@@ -188,20 +179,44 @@ if __name__ == '__main__':
     output = GraphEncoder(entity, emb_size,user_num =6040*0.8,embeddings=embeddings, max_seq_length=10, max_node=20, hiddim=50,
                                 layers=2,cash_fn=None, fix_emb=False).to(device)
 
+    # 用户偏好嵌入
     f = open('data/rating_final_kg', 'r', encoding='utf-8')
     contents = f.readlines()
     users = []
     seqs = []
+    # 解析数据 字典结构 key:userId values:set (itemId) 1->n
+    user_items_dict = defaultdict(set)
     for content in contents:
         all = content.strip('\n').split('\t')
         intLine = list(map(int,all))
-        users.append(intLine[0])
-        seqs.append(intLine[1])
-    seq = np.array([seqs[:10]])
-    user = users[:1]
-    user_like = output(seq,user)
+        user_items_dict[intLine[0]].add(intLine[1])
+    # 循环user_items_dict
+    # userId=182011
+    for userId in user_items_dict:
+        items = list(user_items_dict[userId])
+        for i in range(0, len(items), 10):
+            seq = np.array([items[i:i + 10]])
+            user_like = output(seq, [userId])
+
+    # 项目嵌入
     user_emb = nn.Parameter(torch.Tensor(6040, emb_size))
+    pos = [1,2,3,4,5,6]
     entity_user_emb = torch.cat([embeddings, user_emb], dim=0).to(device)
+    pos_emb = embeddings[pos]
     entity_user_emb = entity_user_emb.t()
+    # 训练
+    for i in range(1000):#1000是训练次数
+        self.train(user_ratings_train)  # 训练1000次完成
+    predict_matrix = self.predict(self.U, self.V)  # 将训练完成的矩阵內积
+    # 预测
     rec = user_like @ entity_user_emb
+    print(user_like)
     print("rec:",rec)
+
+    user_like = tensor([-0.0969, 0.0196, 0.0922, -0.1443, -0.0029, -0.0008, -0.0022, -0.0375,
+            0.1024, 0.0101, 0.0945, 0.0314, 0.0368, 0.0463, 0.0808, 0.0443,
+            0.0713, 0.0180, -0.0630, 0.0821, 0.1442, -0.0835, 0.0135, 0.0182,
+            0.0888, 0.0546, -0.0307, -0.0566, -0.0244, 0.0724, -0.0822, -0.0095,
+            -0.0958, 0.0179, -0.0612, -0.0274, 0.0163, 0.0273, 0.0049, 0.0622,
+            -0.0362, 0.0751, 0.1594, -0.0131, -0.0133, -0.0091, -0.0577, 0.1006,
+            0.0528, -0.1293], device='cuda:0', grad_fn= < AddBackward0 >)
