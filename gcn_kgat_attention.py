@@ -8,6 +8,7 @@ from tqdm import tqdm
 import pickle
 import gzip
 import numpy as np
+import random
 from collections import defaultdict
 use_cuda = torch.cuda.is_available()
 device=torch.device("cuda" if use_cuda else "cpu")
@@ -170,53 +171,3 @@ class GraphEncoder(Module):
         output = self.layer1(output)
         # print(output)
         return output
-
-if __name__ == '__main__':
-    embedding_path = 'data/embedding.vec.json'
-    embeddings = torch.FloatTensor(json.load(open(embedding_path, 'r'))['ent_embeddings'])
-    entity = embeddings.shape[0]
-    emb_size = embeddings.shape[1]
-    output = GraphEncoder(entity, emb_size,user_num =6040*0.8,embeddings=embeddings, max_seq_length=10, max_node=20, hiddim=50,
-                                layers=2,cash_fn=None, fix_emb=False).to(device)
-
-    # 用户偏好嵌入
-    f = open('data/rating_final_kg', 'r', encoding='utf-8')
-    contents = f.readlines()
-    users = []
-    seqs = []
-    # 解析数据 字典结构 key:userId values:set (itemId) 1->n
-    user_items_dict = defaultdict(set)
-    for content in contents:
-        all = content.strip('\n').split('\t')
-        intLine = list(map(int,all))
-        user_items_dict[intLine[0]].add(intLine[1])
-    # 循环user_items_dict
-    # userId=182011
-    for userId in user_items_dict:
-        items = list(user_items_dict[userId])
-        for i in range(0, len(items), 10):
-            seq = np.array([items[i:i + 10]])
-            user_like = output(seq, [userId])
-
-    # 项目嵌入
-    user_emb = nn.Parameter(torch.Tensor(6040, emb_size))
-    pos = [1,2,3,4,5,6]
-    entity_user_emb = torch.cat([embeddings, user_emb], dim=0).to(device)
-    pos_emb = embeddings[pos]
-    entity_user_emb = entity_user_emb.t()
-    # 训练
-    for i in range(1000):#1000是训练次数
-        self.train(user_ratings_train)  # 训练1000次完成
-    predict_matrix = self.predict(self.U, self.V)  # 将训练完成的矩阵內积
-    # 预测
-    rec = user_like @ entity_user_emb
-    print(user_like)
-    print("rec:",rec)
-
-    user_like = tensor([-0.0969, 0.0196, 0.0922, -0.1443, -0.0029, -0.0008, -0.0022, -0.0375,
-            0.1024, 0.0101, 0.0945, 0.0314, 0.0368, 0.0463, 0.0808, 0.0443,
-            0.0713, 0.0180, -0.0630, 0.0821, 0.1442, -0.0835, 0.0135, 0.0182,
-            0.0888, 0.0546, -0.0307, -0.0566, -0.0244, 0.0724, -0.0822, -0.0095,
-            -0.0958, 0.0179, -0.0612, -0.0274, 0.0163, 0.0273, 0.0049, 0.0622,
-            -0.0362, 0.0751, 0.1594, -0.0131, -0.0133, -0.0091, -0.0577, 0.1006,
-            0.0528, -0.1293], device='cuda:0', grad_fn= < AddBackward0 >)
