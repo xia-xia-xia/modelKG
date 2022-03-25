@@ -1,5 +1,5 @@
 import pandas as pd
-kg_path = 'kg.txt'
+kg_path = 'data/kg.txt'
 
 def load_kg(filename):
     kg_data = pd.read_csv(filename, sep='\t', names=['h', 't', 'r'], engine='python')
@@ -10,8 +10,8 @@ def load_kg(filename):
     n_entities = max(max(kg_data['h']), max(kg_data['t'])) + 1
     print("n_entities",n_entities)
 
-user_path = 'ratings.txt'
-writer = open('rating_final_kg', 'w', encoding='utf-8')
+user_path = 'data/ratings.txt'
+writer = open('data/rating_final_kg', 'w', encoding='utf-8')
 with open(user_path) as f:
     for l in f.readlines():
         l = l.strip('\n').split('\t')

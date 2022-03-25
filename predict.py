@@ -17,8 +17,8 @@ class BPR:
     def train(self,user_items_dict):
         lr = 0.01  # 步长α
         reg = 0.01  # 参数λ
-        for user in range(len(user_items_dict)):
-        # for user in range(2):
+        # for i in range(len(user_items_dict)):
+        for user in range(2):
             # 得到用户偏好嵌入矩阵
             userId = random.randint(182011, 182011 + len(user_items_dict))  # 随机获取一个用户
             if userId not in user_items_dict.keys():
@@ -63,13 +63,13 @@ class BPR:
         return user_items_dict
 
     def main(self):
-        train_count = 3  # 训练次数
+        train_count = 3  # 训练次数1000
         user_items_dict = self.load_data('data/rating_final_kg')
         for i in range(train_count):
             user_like,V = self.train(user_items_dict)
             # print("user_like,V",user_like,V)
             predict = user_like @ V.T   # 将训练完成的矩阵內积
-            print("rec:", predict)
+            print("scoreList:", predict)
 if __name__ == '__main__':
     bpr = BPR()
     bpr.main()

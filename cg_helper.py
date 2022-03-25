@@ -93,7 +93,7 @@ def get_topk(scores: list, visited: set, k: int):
             tmp = self.sess.run(self.hessian, feed_dict=feed_dict)
             res += tmp
         res = res * self.num_samples / train_data.shape[0]    #num_samples = data.train_data.shape[0]所有训练数据的行数？
-        return res + np.identity(res.shape[0]) * self.damping  # self.damping = 0.01
+        return res + np.identity(res.shape[0]) * self.damping  # self.damping = 0.01 即添加了阻尼项λ= 0.01到Hessian矩阵
 
     def get_loss_grad_individual(self, user_id, item_id, pos_item, neg_item, data, args):
         feed_dict = self.prepare_feed_dict_batch([user_id], [pos_item], data, args,

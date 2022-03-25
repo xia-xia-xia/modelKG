@@ -2,6 +2,7 @@ import os
 import pandas as pd
 from time import time
 import numpy as np
+from cg_helper import *
 
 def find_counterfactual_multiple_k(self, user_id, ks):
 	"""
@@ -20,14 +21,14 @@ def find_counterfactual_multiple_k(self, user_id, ks):
 	for i in range(len(ks) - 1):
 		assert ks[i] < ks[i + 1]
 	cur_scores = model.get_scores_per_user(user_id)  #分数列表 rec_model.py文件
-	visited = data.user_positive_list[user_id]   #交互的项目列表
+	visited = data.user_positive_list[user_id]   #交互的pos_item项目(eg,评分>3)
 	_, topk = get_topk(cur_scores, set(visited), ks[-1])
 	recommended_item = topk[0][0]
 
 	# 初始化用户历史交互项目对top k items的影响
 	influences = np.zeros((ks[-1], len(visited)))
 	for i in range(ks[-1]):
-		influences[i] = model.get_influence3(user_id, topk[i][0], data, args) #交互的items对于top k items分数差距的影响
+		influences[i] = model.get_influence3(user_id, topk[i][0]) #交互的items对于top k items分数差距的影响
 	res = None  # 移除的项目集removed_items
 	best_gap = 1e9  # score_gap
 	best_repl = -1
@@ -112,7 +113,7 @@ def generate_cf(ks):
 
 	for j in range(len(ks)):
 		df = pd.DataFrame(all_results[j])
-		df.to_csv(f'{args.algo}_{ks[j]}.csv', index=False)
+		df.to_csv(f'kgcsir_{ks[j]}.csv', index=False)
 
 if __name__ == "__main__":
 	#generate_cf([5, 10, 20])
