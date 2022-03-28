@@ -3,6 +3,7 @@ import numpy as np
 from retrain_counterfactual import counterfactual2path
 from help_getNewScores import *
 from cg_helper import get_scores_per_user
+from ast import literal_eval
 
 def get_scores(idx, user_id, item_id, topk, counterfactual, predicted_scores, replacement, item2scores, home_dir):
 	"""
