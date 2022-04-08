@@ -54,20 +54,19 @@ def find_counterfactual_multiple_k(self, user_id, ks):
 	return ret
 
 def find_counterfactual_multiple_k1(user_id,ks,user_items_dict,user_scoreList_dict,bpr):
-	cur_scores = user_scoreList_dict[user_id]  # 分数列表 rec_model.py文件
+	cur_scores=user_scoreList_dict[user_id]  # 分数列表 rec_model.py文件
 	visited = user_items_dict[user_id]  # 交互的pos_item项目(eg,评分>3)
 	_, topk = get_topk(cur_scores, set(visited), ks[-1])
 	recommended_item = topk[0][0]
 	# recommended_item_score = topk[0][1]
 	# 初始化用户历史交互项目对top k items的影响
 	influences = np.zeros((ks[-1], len(visited)))
-	predict_cur=user_scoreList_dict[user_id]
 	# enumerate()用于将一个可遍历的数据对象(如列表、元组或字符串)组合为一个索引序列，同时列出数据和数据下标，一般用在for循环当中。
 	for i, itemId in enumerate(visited):
 		predict_tmp = bpr.train3(user_id, user_items_dict, itemId)
 		for j in range(ks[-1]):
 			# 老分数减新分数
-			old_sorce=predict_cur[topk[j][0]]
+			old_sorce=cur_scores[topk[j][0]]
 			new_sorce=predict_tmp[topk[j][0]]
 			influences[j][i] =old_sorce-new_sorce # 交互的items对于top k items分数差距的影响
 
@@ -83,13 +82,16 @@ def find_counterfactual_multiple_k1(user_id,ks,user_items_dict,user_scoreList_di
 			res, best_repl, best_i, best_gap = tmp_res, topk[i][0], i, tmp_gap
 
 		if i + 1 == ks[len(ret)]:
-			predicted_scores = np.array([cur_scores[item] for item, _ in topk[:(i + 1)]])
-			for item in res:
-				predicted_scores -= influences[:(i + 1), item]
-			assert predicted_scores[0] < predicted_scores[best_i]
-			assert abs(predicted_scores[0] - predicted_scores[best_i] - best_gap) < 1e-6
-			ret.append((set(list(visited)[idx] for idx in res), recommended_item, [item for item, _ in topk[:(i + 1)]],
-						list(predicted_scores), best_repl))
+			if res is not None:
+				predicted_scores = np.array([cur_scores[item] for item, _ in topk[:(i + 1)]])
+				for item in res:
+					predicted_scores -= influences[:(i + 1), item]
+				assert predicted_scores[0] < predicted_scores[best_i]
+				assert abs(predicted_scores[0] - predicted_scores[best_i] - best_gap) < 1e-6
+				ret.append((set(list(visited)[idx] for idx in res), recommended_item, [item for item, _ in topk[:(i + 1)]],
+							list(predicted_scores), best_repl))
+			else:
+				ret.append((None, recommended_item, [item for item, _ in topk[:(i + 1)]], None, -1))
 	# print('counterfactual time', time() - begin)
 	return ret
 
@@ -148,17 +150,24 @@ def generate_cf(ks):
 	for i, user_id in enumerate(user_items_dict):
 		print(f'testing user {i+1}/{n_samples}: {user_id}')
 		# res = find_counterfactual_multiple_k(user_id, ks)
-		res = find_counterfactual_multiple_k1(user_id, [5], user_items_dict, user_scoreList_dict, bpr)
+		res = find_counterfactual_multiple_k1(user_id, ks, user_items_dict, user_scoreList_dict, bpr)
 		append_result(ks, all_results, user_id, res)
 
 	for j in range(len(ks)):
 		df = pd.DataFrame(all_results[j])
-		df.to_csv(f'kgcsir_{ks[j]}.csv', index=False)
+		df.to_csv(f'result/kgcsir_{ks[j]}.csv', index=False)
+
+def set_global_seeds(i):
+    np.random.seed(i)
+    random.seed(i)
+    torch.manual_seed(i)
+    torch.cuda.manual_seed(i)
 
 if __name__ == "__main__":
 	#generate_cf([5, 10, 20])
+	set_global_seeds(28)
 	bpr = BPR()
-	user_items_dict=bpr.load_data('data/rating_final_test_kg')
+	user_items_dict=bpr.load_data('data/train_test')
 	user_scoreList_dict = bpr.train2(user_items_dict)
 	# for userId in user_items_dict:
 	# 	find_counterfactual_multiple_k1(userId, [5], user_items_dict, user_scoreList_dict, bpr)

@@ -5,19 +5,9 @@ from ast import literal_eval
 def get_topk_scores(idx, user_id, item_id, topk, counterfactual, predicted_scores, replacement):
     """
     get the new scores of top-k items
-    Args:
-        idx: test number
-        user_id: ID of user
-        item_id: ID of item
-        topk: the top-k items
-        counterfactual: the counterfactual set
-        predicted_scores: the predicted scores
-        replacement: the replacement item
-        item2scores: a dict for caching
-        home_dir: the home directory, where trained models are stored
     Returns: a 2d array where each row is the scores of top-k items in one retrain.
     """
-    scores = retrain([5], bpr, user_items_dict)
+    scores = retrain(ks, bpr, user_items_dict)
     if scores is None:
         return None
     res = np.zeros((1, len(topk)))
@@ -28,9 +18,7 @@ def get_topk_scores(idx, user_id, item_id, topk, counterfactual, predicted_score
 def get_new_scores_main(input_files):
     """
     get new scores after retrained for the given input_files
-     home_dir: home directory where pretrained models are stored
      input_files: files containing the counterfactual sets
-     get_scores: a method to get new scores
     """
     for file in input_files:
         print('begin file', file)
@@ -66,11 +54,18 @@ def get_new_scores(ks):
 	"""
 	get new scores after retrained for the given values of k
 	"""
-	input_files = [f"kgcsir_{k}.csv" for k in ks]
+	input_files = [f"result/kgcsir_{k}.csv" for k in ks]
 	get_new_scores_main(input_files)
 
+def set_global_seeds(i):
+    np.random.seed(i)
+    random.seed(i)
+    torch.manual_seed(i)
+    torch.cuda.manual_seed(i)
 if __name__ == "__main__":
+    set_global_seeds(28)
 	#get_new_scores([5, 10, 20])
+    ks = [5]
     bpr = BPR()
-    user_items_dict = bpr.load_data('data/rating_final_test_kg')
-    get_new_scores([5])
+    user_items_dict = bpr.load_data('data/train_test')
+    get_new_scores(ks)

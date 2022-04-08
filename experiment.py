@@ -3,7 +3,7 @@ import pandas as pd
 from ast import literal_eval
 
 def evaluate_files(ks):
-    input_files = [f"kgcsir_{k}.csv" for k in ks]
+    input_files = [f"result/kgcsir_{k}.csv" for k in ks]
     for file in input_files:
         print(file)
         data = pd.read_csv(file)
@@ -33,7 +33,6 @@ def main():
     #ks = [5, 10, 20]
     ks = [5]
     # generate_cf(ks)
-    # retrain(ks)
     # get_new_scores(ks)
     evaluate_files(ks)
 

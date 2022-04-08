@@ -11,7 +11,7 @@ def retrain(ks,bpr,user_items_dict):
 	Trained models are saved to user's home directory
 	"""
 	inputs = []
-	input_files = [f"kgcsir_{k}.csv" for k in ks]
+	input_files = [f"result/kgcsir_{k}.csv" for k in ks]
 	for file in input_files:
 		inputs.append(pd.read_csv(file))
 	inputs = pd.concat(inputs, ignore_index=True)  #对index重新安排, 为False的时候会保留之前的index
@@ -56,7 +56,8 @@ def read_row_from_result_file(row):
 
 if __name__ == "__main__":
 	#retrain([5, 10, 20])
+	ks = [5]
 	bpr = BPR()
-	user_items_dict = bpr.load_data('data/rating_final_test_kg')
+	user_items_dict = bpr.load_data('data/train_test')
 	user_scoreList_dict = bpr.train2(user_items_dict)
-	retrain([5],bpr,user_items_dict)
+	retrain(ks,bpr,user_items_dict)
