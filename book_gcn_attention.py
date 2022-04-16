@@ -16,8 +16,8 @@ from numpy.random import RandomState
 
 class GraphConstructer():
     def __init__(self, max_nodes, max_seq_length, kg_fn=None, cached_graph_fn=None):
-        user_fn = 'data/movie_rating_final_kg'
-        kg_fn = 'data/movie_kg.txt'
+        user_fn = 'data/book_rating_kg'
+        kg_fn = 'data/book_kg.txt'
         self.max_nodes = max_nodes
         self.max_seq_length = max_seq_length
         self.cached_graph_fn = cached_graph_fn
@@ -120,12 +120,12 @@ class GraphEncoder(Module):
                  cash_fn=None):
         super(GraphEncoder, self).__init__()
         self.n_items = 10
-        self.layer1 = nn.Linear(150, 50)
+        self.layer1 = nn.Linear(60, 20)
         self.entity = entity
         # nn.Embedding是一个简单的存储固定大小的词典的嵌入向量的查找表，
         # 给一个编号，嵌入层就能返回这个编号对应的嵌入向量，嵌入向量反映了各个编号代表的符号之间的语义关系。
-        self.entity_user_emb = nn.Embedding(entity+6040, emb_size)
-        user_emb = nn.Parameter(torch.Tensor(6040,emb_size))
+        self.entity_user_emb = nn.Embedding(entity+17860, emb_size)
+        user_emb = nn.Parameter(torch.Tensor(17860,emb_size))
         nn.init.xavier_uniform_(user_emb,gain=nn.init.calculate_gain('relu')) #均匀分布，使用gain参数来自定义初始化的标准差匹配特定的激活函数
 
         entity_user_emb = torch.cat([embeddings,user_emb], dim=0)

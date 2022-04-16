@@ -2,7 +2,7 @@ from pathlib import Path
 from time import time
 import numpy as np
 import pandas as pd
-from predict import *
+# from predict import *
 from ast import literal_eval
 def retrain(ks,bpr,user_items_dict):
 	"""
@@ -15,7 +15,7 @@ def retrain(ks,bpr,user_items_dict):
 	for file in input_files:
 		inputs.append(pd.read_csv(file))
 	inputs = pd.concat(inputs, ignore_index=True)  #对index重新安排, 为False的时候会保留之前的index
-	print(inputs)
+	# print(inputs)
 
 	for row in inputs.itertuples():
 		idx, user_id, item_id, topk, counterfactual, predicted_scores, replacement = read_row_from_result_file(row)
@@ -58,6 +58,5 @@ if __name__ == "__main__":
 	#retrain([5, 10, 20])
 	ks = [5]
 	bpr = BPR()
-	user_items_dict = bpr.load_data('data/train_test')
-	user_scoreList_dict = bpr.train2(user_items_dict)
+	user_items_dict = bpr.load_data('test/movie_rating_final_test_kg')
 	retrain(ks,bpr,user_items_dict)

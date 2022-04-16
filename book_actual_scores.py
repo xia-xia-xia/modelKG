@@ -1,7 +1,5 @@
 import numpy as np
-from retrain_counterfactual1 import *
-from train_bpr import *
-# from predict import *
+from book_train_bpr import *
 from ast import literal_eval
 import pandas as pd
 
@@ -10,15 +8,16 @@ def get_topk_scores(idx, user_id, item_id, topk, counterfactual, predicted_score
     get the new scores of top-k items
     Returns: a 2d array where each row is the scores of top-k items in one retrain.
     """
-    times = 5
-    res = np.zeros((times, len(topk)))
-    for i in range(times):  #增加一列actual_scores 0
-        print('begin retraining', idx, user_id, item_id, topk, counterfactual, replacement)
-        new_predict_scoreList = bpr.train4(user_id, user_items_dict, counterfactual)
-        print('done retraining')
-        res[i] = [new_predict_scoreList[item] for item in topk]
-        # scores = retrain(ks, bpr, user_items_dict)
-        # res[i] = [scores[item] for item in topk]
+    if len(counterfactual)==len(user_items_dict[user_id]):
+        res = None
+    else:
+        times = 5
+        res = np.zeros((times, len(topk)))
+        for i in range(times):  #增加一列actual_scores 0
+            print('begin retraining', idx, user_id, item_id, topk, counterfactual, replacement)
+            new_predict_scoreList = bpr1.train4(user_id, user_items_dict, counterfactual)
+            print('done retraining')
+            res[i] = [new_predict_scoreList[item] for item in topk]
     return res
 
 def get_new_scores_main(input_files):
@@ -60,7 +59,7 @@ def get_new_scores(ks):
 	"""
 	get new scores after retrained for the given values of k
 	"""
-	input_files = [f"result/kgcsir_{k}.csv" for k in ks]
+	input_files = [f"result/all_book_{k}.csv" for k in ks]
 	get_new_scores_main(input_files)
 
 def set_global_seeds(i):
@@ -71,6 +70,6 @@ def set_global_seeds(i):
 if __name__ == "__main__":
     set_global_seeds(28)
     ks = [2]
-    bpr = BPR()
-    user_items_dict = bpr.load_data('test/movie_train.txt')
+    bpr1 = BPR1()
+    user_items_dict = bpr1.load_data('data/book_rating_kg')
     get_new_scores(ks)
