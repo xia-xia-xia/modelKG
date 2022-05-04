@@ -4,8 +4,8 @@ from ast import literal_eval
 from collections import defaultdict
 
 def evaluate_files(ks):
-    input_files = [f"result/all_book_{k}.csv" for k in ks]
-    user_items_dict = load_data('data/book_rating_kg')
+    input_files = [f"result/kg1208_{k}.csv" for k in ks]
+    user_items_dict = load_data('test/movie_train1208')
     for file in input_files:
         print(file)
         data = pd.read_csv(file)
@@ -35,7 +35,7 @@ def main():
     run the full experiment for an algorithm
     """
     #ks = [5, 10, 20]
-    ks = [2]
+    ks = [5]
     # generate_cf(ks)
     # get_new_scores(ks)
     evaluate_files(ks)

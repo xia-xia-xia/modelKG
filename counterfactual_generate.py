@@ -3,8 +3,9 @@ import pandas as pd
 from time import time
 import numpy as np
 from cg_helper import *
-# from predict import *
 from train_bpr import *
+# from no_kg_bpr import *
+# from kg_bpr import *
 
 def find_counterfactual_multiple_k(self, user_id, ks):
 	"""
@@ -157,7 +158,7 @@ def generate_cf(ks):
 
 	for j in range(len(ks)):
 		df = pd.DataFrame(all_results[j])
-		df.to_csv(f'result/kgcsir_{ks[j]}.csv', index=False)
+		df.to_csv(f'result/kg1208_{ks[j]}.csv', index=False)
 
 def set_global_seeds(i):
     np.random.seed(i)
@@ -169,10 +170,10 @@ if __name__ == "__main__":
 	#generate_cf([5, 10, 20])
 	set_global_seeds(28)
 	bpr = BPR()
-	user_items_dict=bpr.load_data('test/movie_train.txt')
+	user_items_dict=bpr.load_data('test/movie_train1208')
 	user_scoreList_dict = bpr.train2(user_items_dict)
 	# for userId in user_items_dict:
 	# 	find_counterfactual_multiple_k1(userId, [5], user_items_dict, user_scoreList_dict, bpr)
-	generate_cf([2])
+	generate_cf([5])
 
 

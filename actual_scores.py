@@ -1,7 +1,7 @@
 import numpy as np
-from retrain_counterfactual1 import *
+# from no_kg_bpr import *
 from train_bpr import *
-# from predict import *
+# from kg_bpr import *
 from ast import literal_eval
 import pandas as pd
 
@@ -60,7 +60,7 @@ def get_new_scores(ks):
 	"""
 	get new scores after retrained for the given values of k
 	"""
-	input_files = [f"result/kgcsir_{k}.csv" for k in ks]
+	input_files = [f"result/kg1208_{k}.csv" for k in ks]
 	get_new_scores_main(input_files)
 
 def set_global_seeds(i):
@@ -70,7 +70,7 @@ def set_global_seeds(i):
     torch.cuda.manual_seed(i)
 if __name__ == "__main__":
     set_global_seeds(28)
-    ks = [2]
+    ks = [5]
     bpr = BPR()
-    user_items_dict = bpr.load_data('test/movie_train.txt')
+    user_items_dict = bpr.load_data('test/movie_train1208')
     get_new_scores(ks)
