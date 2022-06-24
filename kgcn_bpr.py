@@ -1,6 +1,6 @@
 import torch
 import json
-from gcn_kgat_attention import *
+from kgcn import *
 import numpy as np
 import random
 from collections import defaultdict
@@ -24,12 +24,9 @@ class BPR:
         # 设定的用户矩阵
         U = np.zeros((len(user_items_dict), 50))
         for userId in user_items_dict.keys():
-            items = list(user_items_dict[userId])
-            for item in range(0, len(items), 10):
-                seq = np.array([items[item:item + 10]])
-                user_like = self.output(seq, [userId]) * 0.01
-                user_like = user_like.cuda().data.cpu()
-            U[userId-beginUserId] = user_like.numpy()
+            user_like = self.output([userId]) * 0.01
+            user_like = user_like.cuda().data.cpu()
+        U[userId-beginUserId] = user_like.numpy()
         # 设定的项目矩阵
         V = (self.embeddings * 0.01).numpy()
         biasV = np.random.rand(self.item_count) * 0.01
@@ -61,13 +58,12 @@ class BPR:
         lr = 0.01  # 步长α
         reg = 0.01  # 参数λ
         train_count = 1000  # 训练次数
-        # 用户矩阵
         items = list(user_items_dict[userId])
         items.remove(ignoredItem)
-        for item in range(0, len(items), 10):
-            seq = np.array([items[item:item + 10]])
-            user_like = self.output(seq, [userId]) * 0.01
-        user_like = user_like.cuda().data.cpu().numpy()
+        # 用户矩阵
+        user_like = np.random.rand(50) * 0.01
+        # user_like = self.output([userId]) * 0.01
+        # user_like = user_like.cuda().data.cpu().numpy()
         # 项目矩阵
         V = (self.embeddings * 0.01).numpy()
         biasV = np.random.rand(self.item_count) * 0.01
@@ -98,13 +94,12 @@ class BPR:
         lr = 0.01  # 步长α
         reg = 0.01  # 参数λ
         train_count = 1000  # 训练次数
-        # 用户矩阵
         items = list(user_items_dict[userId])
         for igt in ignoredItemList:
             items.remove(igt)
-        for item in range(0, len(items), 10):
-            seq = np.array([items[item:item + 10]])
-            user_like = self.output(seq, [userId]) * 0.01
+        # 用户矩阵
+        # user_like = np.random.rand(50) * 0.01
+        user_like = self.output([userId]) * 0.01
         user_like = user_like.cuda().data.cpu().numpy()
         # 项目矩阵
         V = (self.embeddings * 0.01).numpy()
@@ -146,9 +141,9 @@ class BPR:
         user_items_dict = self.load_data('test/movie_rating_final_test_kg')
         # 测试train2
         # user_scoreList_dict = self.train2(user_items_dict)
-        # # print(len(user_scoreList_dict))
+        # print(len(user_scoreList_dict))
         # for userr in range(len(user_scoreList_dict)):
-        #     print(user_scoreList_dict[userr])
+        #     # print(user_scoreList_dict[userr])
         #     scores = Counter({idx: val for idx, val in enumerate(user_scoreList_dict[userr]) if idx not in user_items_dict[userr+182011]})
         #     topk = scores.most_common(5)
         #     print(f'{userr}_top5:{topk}')

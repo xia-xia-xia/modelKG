@@ -142,35 +142,8 @@ class GraphEncoder(Module):
             indim = outdim
 
     # forward()方法说明了每一层对数据的操作
-    def forward(self, seq, user):
+    def forward(self, user):
         user = (torch.LongTensor(user)).to(device)
-        batch_seq_adjs = []
-        batch_seq_neighbors = []
-        for s in seq:
-            neighbors, adj = self.constructor.get_seq_graph(s)
-            batch_seq_neighbors.append(neighbors[None, :])
-            batch_seq_adjs.append(adj[None, :])
-        input_neighbors_ids = torch.cat(batch_seq_neighbors, dim=0)
-        input_adjs = torch.cat(batch_seq_adjs, dim=0)
-        input_state = self.entity_user_emb(input_neighbors_ids)
-        # GRU的思想
-        for gnn in self.gnns:
-            output_state = gnn(input_state, input_adjs)
-            input_state = output_state
-        seq_embeddings = output_state[:, :, :1, :].contiguous().squeeze()  # [N x L x d]
         user_emb = self.entity_user_emb(user)
-        '''
-            items = seq_embeddings.permute(0, 2, 1)  #.permute(0,2,1)将维度索引1和维度索引2交换位置
-            output = torch.cat((user_emb, middle, right), 1)
-        '''
-
         user_emb = user_emb.squeeze(0)
-        items = seq_embeddings.t()
-        right = items @ self.attention_weights
-        middle = user_emb * right
-        output = torch.cat((user_emb, middle, right), 0).flatten()
-        output = self.layer1(output)
-        # print(output)
-
-
-        return output
+        return user_emb

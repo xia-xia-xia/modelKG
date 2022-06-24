@@ -4,8 +4,8 @@ from ast import literal_eval
 from collections import defaultdict
 
 def evaluate_files(ks):
-    input_files = [f"result/kg1208_{k}.csv" for k in ks]
-    user_items_dict = load_data('test/movie_train1208')
+    input_files = [f"result/kgcn604_{k}.csv" for k in ks]
+    user_items_dict = load_data('test/movie_train604')
     for file in input_files:
         print(file)
         data = pd.read_csv(file)
